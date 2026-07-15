@@ -28,10 +28,14 @@ def load_config(env: dict[str, str] | None = None) -> Config:
     CI_TRIAGE_AGENT_KEY_ID and CI_TRIAGE_AGENT_SECRET are set."""
     source = env if env is not None else os.environ
 
-    target_repo = source.get("CI_TRIAGE_TARGET_REPO", DEFAULT_TARGET_REPO)
-    lookback = int(source.get("CI_TRIAGE_LOOKBACK", DEFAULT_LOOKBACK))
+    # `.get(key, default)` only falls back when the key is *absent* -- an
+    # explicitly empty env var would otherwise silently win over the
+    # default (and crash int()/float() on ""), so empty/unset is treated
+    # the same via `or`.
+    target_repo = source.get("CI_TRIAGE_TARGET_REPO") or DEFAULT_TARGET_REPO
+    lookback = int(source.get("CI_TRIAGE_LOOKBACK") or DEFAULT_LOOKBACK)
     timeout_seconds = float(
-        source.get("CI_TRIAGE_TIMEOUT_SECONDS", DEFAULT_TIMEOUT_SECONDS)
+        source.get("CI_TRIAGE_TIMEOUT_SECONDS") or DEFAULT_TIMEOUT_SECONDS
     )
     # A token is optional (public repos are readable anonymously) but
     # raises the GitHub API rate limit from 60/hr to 5000/hr -- in CI,
@@ -41,7 +45,7 @@ def load_config(env: dict[str, str] | None = None) -> Config:
 
     key_id = source.get("CI_TRIAGE_AGENT_KEY_ID") or None
     secret = source.get("CI_TRIAGE_AGENT_SECRET") or None
-    base_url = source.get("CI_TRIAGE_BASE_URL", "https://api.aiopsenabler.com")
+    base_url = source.get("CI_TRIAGE_BASE_URL") or "https://api.aiopsenabler.com"
 
     return Config(
         target_repo=target_repo,
