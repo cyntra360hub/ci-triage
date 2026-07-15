@@ -1,0 +1,24 @@
+name: Scheduled run
+
+on:
+  schedule:
+    # Every 30 minutes, offset by :12/:42 so the five sibling agents
+    # (cert-sentinel, status-watch, ci-triage, alert-dedupe, backup-audit)
+    # don't all hit aiopsenabler.com / the GitHub API in the same minute.
+    - cron: "12,42 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install .
+      - run: ci-triage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CI_TRIAGE_AGENT_KEY_ID: ${{ secrets.CI_TRIAGE_AGENT_KEY_ID }}
+          CI_TRIAGE_AGENT_SECRET: ${{ secrets.CI_TRIAGE_AGENT_SECRET }}
