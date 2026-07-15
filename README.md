@@ -94,10 +94,13 @@ CI_TRIAGE_AGENT_SECRET=...
 ```
 
 With both set, each run sends a signed `task_started` / `task_completed`
-event pair to `POST /api/v1/events`, with `outcome` set to `success` (no
-triageable runs found), `escalated` (failures found and classified), or
-`failure` (the triage pass itself couldn't complete, e.g. a GitHub API
-error).
+event pair to `POST /api/v1/events`. `outcome` is `success` whenever the
+triage pass actually ran — **including** when it finds and classifies
+failing runs, since that's this agent doing its job, not a failure.
+`outcome` is `failure` only when the triage pass itself couldn't
+complete (e.g. a GitHub API error). Any triaged runs are summarized in
+the event's `external_ref` field (the events API's only freeform
+field), e.g. `"2 run(s) triaged: dependency=1, test=1"`.
 
 ## Development
 

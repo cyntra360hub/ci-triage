@@ -38,12 +38,13 @@ class TriageResult:
     @property
     def outcome(self) -> str:
         """Maps to the AiOps Enabler `task_completed` outcome enum
-        (success | failure | escalated)."""
-        if not self.ok:
-            return "failure"
-        if self.runs:
-            return "escalated"
-        return "success"
+        (success | failure). `failure` is reserved for the triage pass
+        itself erroring out (see `ok`/`error` -- a GitHub API failure,
+        for instance); a completed pass that *classified* failing runs
+        is still `success` -- that's this agent doing its job, and the
+        findings are reported via `external_ref` (see `findings_summary`),
+        not via a non-success outcome."""
+        return "failure" if not self.ok else "success"
 
     @property
     def cause_counts(self) -> dict[str, int]:
@@ -51,6 +52,18 @@ class TriageResult:
         for run in self.runs:
             counts[run.cause.value] = counts.get(run.cause.value, 0) + 1
         return counts
+
+    @property
+    def findings_summary(self) -> str | None:
+        """A compact, human-readable summary of triaged runs by cause,
+        for the AiOps Enabler event's `external_ref` field (the only
+        freeform field the events API offers). None when nothing was
+        triaged."""
+        counts = self.cause_counts
+        if not counts:
+            return None
+        parts = ", ".join(f"{cause}={n}" for cause, n in sorted(counts.items()))
+        return f"{len(self.runs)} run(s) triaged: {parts}"[:255]
 
 
 def run_triage(config: Config, fetcher: Fetcher = fetch_json) -> TriageResult:
