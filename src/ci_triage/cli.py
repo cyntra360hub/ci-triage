@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+import time
 
 from ci_triage.config import load_config
 from ci_triage.reporting import report_run
@@ -24,13 +25,14 @@ def _print_report(result: TriageResult) -> None:
 
 
 def main() -> int:
+    run_started = time.monotonic()
     config = load_config()
     result = run_triage(config)
     _print_report(result)
 
     if config.report_enabled:
         try:
-            report_run(config, result)
+            report_run(config, result, run_started=run_started)
             print("Reported run to AiOps Enabler.")
         except Exception as exc:  # noqa: BLE001
             print(f"AiOps Enabler reporting failed (non-fatal): {exc}", file=sys.stderr)
