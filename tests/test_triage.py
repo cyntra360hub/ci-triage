@@ -45,7 +45,8 @@ def test_failed_run_is_triaged_and_classified():
     assert result.runs[0].cause.value == "test"
     # Classifying a failing run is this agent doing its job -- still success.
     assert result.outcome == "success"
-    assert result.findings_summary == "1 run(s) triaged: test=1"
+    assert result.findings_summary == "found 1 failing run -- mostly test"
+    assert result.technical_summary == "test=1"
 
 
 def test_run_level_fetch_error_is_reported():
@@ -106,7 +107,8 @@ def test_cause_counts_aggregates_multiple_runs():
 
     result = run_triage(config, fetcher=fetcher)
     assert result.cause_counts == {"test": 1, "dependency": 1}
-    assert result.findings_summary == "2 run(s) triaged: dependency=1, test=1"
+    assert result.findings_summary == "found 2 failing runs -- mostly dependency"
+    assert result.technical_summary == "dependency=1, test=1"
     assert result.outcome == "success"
 
 

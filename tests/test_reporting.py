@@ -33,9 +33,9 @@ def test_report_enabled_sends_started_then_completed():
     assert kinds == ["task_started", "task_completed"]
 
 
-def test_outcome_success_when_runs_triaged_with_external_ref():
+def test_outcome_success_when_runs_triaged_with_details():
     # Classifying failing runs is this agent doing its job -- the
-    # findings go in external_ref, not outcome.
+    # findings go in `details`/`external_ref`, not outcome.
     poster = _FakePoster()
     config = Config(report_enabled=True, agent_key_id="ak_test", agent_secret="s3cret")
     result = TriageResult(
@@ -45,10 +45,11 @@ def test_outcome_success_when_runs_triaged_with_external_ref():
     report_run(config, result, poster=poster)
     second_body = json.loads(poster.calls[1][1])
     assert second_body["outcome"] == "success"
-    assert second_body["external_ref"] == "1 run(s) triaged: test=1"
+    assert second_body["details"] == "found 1 failing run -- mostly test"
+    assert second_body["external_ref"] == "test=1"
 
 
-def test_outcome_success_without_external_ref_when_nothing_triaged():
+def test_outcome_success_without_details_or_external_ref_when_nothing_triaged():
     poster = _FakePoster()
     config = Config(report_enabled=True, agent_key_id="ak_test", agent_secret="s3cret")
     result = TriageResult(target_repo="o/r", runs=())
@@ -56,6 +57,7 @@ def test_outcome_success_without_external_ref_when_nothing_triaged():
     second_body = json.loads(poster.calls[1][1])
     assert second_body["outcome"] == "success"
     assert "external_ref" not in second_body
+    assert "details" not in second_body
 
 
 def test_outcome_failure_when_triage_errored():

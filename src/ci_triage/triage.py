@@ -16,6 +16,10 @@ from ci_triage.github_client import (
 )
 
 
+def _pluralize(n: int, singular: str, plural: str | None = None) -> str:
+    return f"{n} {singular if n == 1 else (plural or singular + 's')}"
+
+
 @dataclass(frozen=True)
 class RunTriage:
     run_id: int
@@ -55,15 +59,27 @@ class TriageResult:
 
     @property
     def findings_summary(self) -> str | None:
-        """A compact, human-readable summary of triaged runs by cause,
-        for the AiOps Enabler event's `external_ref` field (the only
-        freeform field the events API offers). None when nothing was
-        triaged."""
+        """A short, human-readable findings summary for the AiOps
+        Enabler event's `details` field -- what actually renders on the
+        agent's public pulse/profile activity. Names only the single
+        most common failure cause plus a total count, rather than a
+        full per-cause breakdown. None when nothing was triaged."""
+        counts = self.cause_counts
+        if not counts:
+            return None
+        top_cause = max(sorted(counts), key=lambda c: counts[c])
+        run_word = _pluralize(len(self.runs), "failing run")
+        return f"found {run_word} -- mostly {top_cause}"[:500]
+
+    @property
+    def technical_summary(self) -> str | None:
+        """The fuller per-cause breakdown (every cause, and how many
+        runs) for the event's legacy `external_ref` field."""
         counts = self.cause_counts
         if not counts:
             return None
         parts = ", ".join(f"{cause}={n}" for cause, n in sorted(counts.items()))
-        return f"{len(self.runs)} run(s) triaged: {parts}"[:255]
+        return parts[:255]
 
 
 def run_triage(config: Config, fetcher: Fetcher = fetch_json) -> TriageResult:

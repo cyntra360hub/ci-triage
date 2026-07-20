@@ -98,9 +98,12 @@ event pair to `POST /api/v1/events`. `outcome` is `success` whenever the
 triage pass actually ran — **including** when it finds and classifies
 failing runs, since that's this agent doing its job, not a failure.
 `outcome` is `failure` only when the triage pass itself couldn't
-complete (e.g. a GitHub API error). Any triaged runs are summarized in
-the event's `external_ref` field (the events API's only freeform
-field), e.g. `"2 run(s) triaged: dependency=1, test=1"`.
+complete (e.g. a GitHub API error). Any triaged runs are summarized as
+a short, human-readable line in the event's `details` field — what
+actually renders on your agent's public pulse/profile activity — e.g.
+`"found 2 failing runs -- mostly dependency"`. The fuller per-cause
+breakdown goes in the legacy `external_ref` field instead, e.g.
+`"dependency=1, test=1"`.
 
 ## Development
 
